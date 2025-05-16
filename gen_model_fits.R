@@ -132,7 +132,7 @@ slopes.surprisal <- plot_slopes(model.surprisal,variables='number',by='Group') +
 
 intercepts.surprisal <- plot_predictions(model.surprisal,by='Group') + theme_bw()
 
-tikz('surprisal-by-cardinality.tex',width=7*.5,height=7*.5)
+tikz('graphics/surprisal-by-cardinality.tex',width=7*.5,height=7*.5)
 plot.surprisal
 dev.off()
 
@@ -150,7 +150,7 @@ slopes.comprehension <- plot_slopes(model.comprehension,variables='number',by='G
 
 intercepts.comprehension <- plot_predictions(model.comprehension,by='Group') + theme_bw()
 
-tikz('comprehension-by-cardinality.tex',width=7*.5,height=7*.5)
+tikz('graphics/comprehension-by-cardinality.tex',width=7*.5,height=7*.5)
 plot.comprehension
 dev.off()
 
@@ -168,7 +168,7 @@ slopes.production <- plot_slopes(model.production,variables='number',by='Group')
 
 intercepts.production <- plot_predictions(model.production,by='Group') + theme_bw()
 
-tikz('production-by-cardinality.tex',width=7*.5,height=7*.5)
+tikz('graphics/production-by-cardinality.tex',width=7*.5,height=7*.5)
 plot.production
 dev.off()
 
