@@ -188,7 +188,7 @@ PC1 explains `r round(summary(sand.merged.PCA)$importance['Proportion of Varianc
 sand.PCA.correlations
 ```
 
-Below, the first principal component is shown for all Indo-Aryan languages, with language labels:
+Below, the first principal component is shown for all Indo-Aryan languages, with language labels (n.b. that some choices of coordinates, e.g., for Sanskrit, may not provide a good indication of the region in which languages are/were spoken):
 
 ```{r,warning=F,message=F,echo=F}
 #IA.PC1.map.labeled
