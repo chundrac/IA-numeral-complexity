@@ -1,7 +1,7 @@
 ---
 title: "Indo-Aryan numeral system complexity"
 author: ""
-date: "4/15/2025"
+date: "5/16/2025"
 output:
   rmarkdown::html_document:
     theme: cerulean
@@ -245,7 +245,7 @@ pred.vigesimal
 
 Predicted slope of smooth function representing effect of elevation on PC1 from same model:
 
-```{r}
+```{r,warning=F,message=F,echo=F}
 slope.elevation
 ```
 
