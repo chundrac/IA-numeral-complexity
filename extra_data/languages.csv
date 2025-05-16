@@ -1,0 +1,11 @@
+ID,Name,Glottocode,Glottolog_Name,ISO639P3code,Macroarea,Latitude,Longitude,Family,Comment,Base,Sources
+kalasha,Kalasha,kala1372,Kalasha,,Eurasia,35.6415,71.6657,Indo-Aryan,,Vigesimal,
+dhivehi,Dhivehi,dhiv1236,Dhivehi,,Eurasia,1.928498,73.54433,Indo-Aryan,,Decimal,
+bagri,Bagri,bagr1243,Bagri,,Eurasia,28.6036,71.453,Indo-Aryan,,Decimal,
+lamani,Lambadi,lamb1269,Lambadi,,Eurasia,16.5734,76.9717,Indo-Aryan,,Vigesimal,
+torwali,Torwali,torw1241,Torwali,,Eurasia,35.3101,72.5316,Indo-Aryan,,Vigesimal,
+palula,Phalura,phal1254,Phalura,,Eurasia,35.5096,71.8421,Indo-Aryan,,Vigesimal,
+siraiki,Saraiki,sera1259,Saraiki,,Eurasia,29.5534,71.906,Indo-Aryan,,Decimal,
+domaki,Domaaki,doma1260,Domaaki,,Eurasia,36.3258,74.7984,Indo-Aryan,,Vigesimal,
+gurezi_shina,Shina,shin1264,Shina,,Eurasia,34.6515,75.287,Indo-Aryan,,Vigesimal,
+kalam_kohistani,Indus Kohistani,indu1241,Indus Kohistani,,Eurasia,35.3389,73.0154,Indo-Aryan,,Vigesimal,

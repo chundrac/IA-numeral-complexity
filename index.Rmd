@@ -1,0 +1,353 @@
+---
+title: "Indo-Aryan numeral system complexity"
+author: ""
+date: "4/15/2025"
+output:
+  rmarkdown::html_document:
+    theme: cerulean
+    fig_caption: yes
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+bibliography: bibliography.bib
+link-citations: true
+header-includes:
+  - \usepackage{subfig}
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{css, echo=FALSE}
+  #TOC {
+    min-width: fit-content;
+    white-space: nowrap;
+  }
+  
+  div:has(> #TOC) {
+    display: flex;
+    flex-direction: row-reverse;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+require(viridis)
+require(ggrepel)
+
+#source("gen_notebook_data.R")
+load("notebook_data.RData")
+#source("gen_model_fits.R")
+load("models.RData")
+```
+
+This notebook uses a number of relatively simple quantitative metrics to operationalize the integrative complexity of numeral (i.e., number word) systems across languages, which can be taken as a measure of their morphological irregularity and capable of distinguishing relatively transparent numerals (e.g., English *twenty-one* which has a clear relationship to the numerals *twenty* and *one*) from less transparent ones (e.g., Hindi *ɪkkis* '21' which has a less clear relationship to the numerals *ek* '1' and *bis* '20'). 
+These metrics show the following generalizations:
+
+* Numeral systems of South Asia (specifically of Indo-Aryan languages) show considerably higher degrees of complexity than those of other languages of the world.
+* Higher complexity in numeral systems was preserved in the core Indo-Aryan linguistic region. Languages spoken at higher altitudes developed less complex systems, but this was largely an artifact of the adoption of vigesimal systems. 
+* As with other languages' systems, Indo-Aryan numeral systems display a negative relationship between cardinality and complexity/irregularity, but their overall complexity is higher and the dropoff in complexity as cardinality increases is less steep.
+
+-----
+
+# Data
+
+Data for cross-linguistic numeral systems were taken from two sources:
+
+* UniNum [@ritchie2019unified], a collection of numerals between 0 and 100000000000, provided by Google and language experts. This data set was curated for text-to-speech purposes, and contains data from 186 speech varieties. Representations of numeral wordforms are orthographic, not phonemic.
+* South Asian Numerals Database [SAND; @mamta_kumari_2023_10033151;@sand], a collection of numerals ranging from 1 to 10000000 from 131 speech varieties of South Asia, to which we added data from 10 additional Indo-Aryan languages. Representations of numeral wordforms in SAND are phonemic, transcribed in the International Phonetic Alphabet (IPA). For additional languages, the systematic phonemic (but not necessarily IPA) representations provided in sources were used.
+
+We used only data for the numerals 1--99 from both databases.
+
+----
+
+# Metrics
+
+## Minimum Description Length (MDL)
+
+In line with the information theoretic principle of minimum description length [MDL; @rissanen1983universal], we seek the shortest set of combinable elements needed to generate all 99 numeral words of interest. 
+We use a simplified version of models employed for morpheme and word segmentation [@goldsmith2001unsupervised;@creutz2007unsupervised;@goldwater2009bayesian] using expectation maximization [@dempster1977maximum] in order to segment each numeral form in each language into recurrent subword units such that the set of segmented units is minimized. 
+
+For each language, we randomly initialize the segmentation of each numeral word form $w$. 
+We do not allow numerals 1--9 to be segmented (as they tend to be simplex forms except in the case of systems with bases lower than 10, which are underrepresented in the data sample); we allow 11--19 and multiples of 10 to either be unsegmented (as in less transparent, more fusional forms like  En. *twelve*, Sp. *cuarenta* '40') or have a single segmentation index $i \in \{2,...,|w|-1\}$, where $|w|$ represents word form length, and $i$ the index marking the start of the second subword unit (as in more transparent forms like Gm. *Acht-zehn* '18', Jp. *ni-jū* '20'). 
+All other numerals are forced to have a single segmentation index (as above) or two segmentation indices $(i,j) \in \{2,...,|w|-1\}:j \neq i$
+Segmented units are placed in a cache $\mathbb{W}$. 
+
+For each EM iteration $t$, we randomly consider each word $w$ representing the numerals 10--99, removing the currently segmented units $\sigma(w)_z^{(t-1)}$ from the cache $\mathbb{W}$. 
+We then choose a new segmentation $z^{(t)}$ (either no segmentation, one index, or two, depending on the conditions outlined above) such that $\text{arg min}_{z^{(t)}} \mathbb{W} \cup \sigma(w)_{z^{(t)}}$. 
+We stop when the description length reaches a minimum, or after 1000 iterations. 
+Because this version of the EM algorithm converges on local and not global optima, we run this procedure 10 times per language, storing the shortest description length across runs. 
+We note that this procedure does not account for allophonic processes, and may infer different subword elements that are underlyingly the same according to standard phonological analyses due to allophony, or orthographic variation. 
+
+This procedure yields a single MDL value for each language, representing the complexity of the language's numeral system as a whole.
+
+## N-gram surprisal in context
+
+We additionally operationalize the complexity of numeral systems using n-gram (specifically segmental/grapheme trigram) continuation surprisal, representing the unpredictability of phoneme or grapheme in context, i.e., given the two previous phonemes/graphemes [@piantadosi2012communicative;@dautriche2017words], averaged within and across words. 
+Numeral systems containing more recurrent, predictable elements are expected to exhibit lower surprisal. 
+We compute the mean n-gram surprisal of individual numeral words conditioned on all other words in the system (training vs. held-out). 
+
+For each language, we compute the held-out trigram surprisal of each word form as follows. First, we prepend two instances of the beginning of string sequence *<BOS>* and postpend one instance of the end of string sequence *<EOS>* to each word form. We tabulate frequencies $c()$ of all trigram and bigram segment/grapheme sequences in the training data. For the word form under consideration, we compute the continuation surprisal of each segment/grapheme at index $i \in \{3,...,|w|\}$, $s(w_i|w_{i-2...i-1}) = -\log \frac{c(w_{i-2...i}) + \alpha}{c(w_{i-2...i-1}) + V\alpha}$ (where $\alpha=.1$ is an additive smoothing constant and $V$ is the number of segment types), and average these values. 
+
+This procedure yields a surprisal value for each numeral in the system, conditioned on the other members of the system. 
+These values can be averaged to represent the overall surprisal of the system at the language level.
+
+## Linear discriminative learning: production
+
+We use a simplified version of the linear mapping approach [proposed in @baayen2018inflectional *et seq*] to model the production of numeral forms (e.g. *twelve*) given an underlying semantic representation (\{TENS=1,DIGITS=2\}). 
+Unlike the original version of this model, numeral forms' meanings are represented by two one-hot vectors (comprising the tens- and digits-place value of a numeral) rather than continuous semantic vectors, which are concatenated together and make up rows of the meaning matrix $\boldsymbol{S}$. 
+Numeral forms are represented by a vector containing the counts of the trigrams they contain, which make up rows of the word form matrix $\boldsymbol{W}$. 
+
+Form generation given a semantic representation $\boldsymbol{s}_i$ proceeds as follows. 
+We compute the least-squares solutions $\boldsymbol{\hat{\beta}_{sw}}$ and $\boldsymbol{\hat{\beta}_{ws}}$ that solves the equations $\boldsymbol{S}_{-i}\boldsymbol{\hat{\beta}_{sw}} = \boldsymbol{W}_{-i}$ and $\boldsymbol{W}_{-i}\boldsymbol{\hat{\beta}_{ws}} = \boldsymbol{S}_{-i}$, respectively. 
+
+We then compute a vector of weights $\boldsymbol{s}_i^{\top} \boldsymbol{\hat{\beta}_{sw}}$, representing the association strengths of different trigrams (in reality their predicted counts, but in real-valued space) with the semantic representation $\boldsymbol{s}_i$. 
+We decode the form via beam search: starting with trigrams beginning with the start-of-sequence token, we consider the two trigrams forming valid continuations of the sequence with highest association strength, stopping when the end-of-sequence token is reached. 
+For each candidate form $\boldsymbol{\hat{w}}$, we compute the predicted meaning $\boldsymbol{\hat{w}}^{\top} \boldsymbol{\hat{\beta}_{ws}}$, choosing the candidate form that shows highest correlation (Pearson's $r$) with $\boldsymbol{s}_i$. 
+We measure the error rate between the predicted form and the true form using the Levenshtein distance between the two forms divided by the length of the longer form.
+
+## Linear discriminative learning: comprehension
+
+To model the comprehension or discrimination of the meaning of a given form, we train two multinomial logistic classifers on the word form matrix $\boldsymbol{W}_{-i}$ in order to predict the tens and digits label of $\boldsymbol{w}_i$ with maximum probability according to the classifiers. 
+We treat classification accuracy as a binary variable valued $1$ if the tens and digits label are correctly predicted and $0$ otherwise.
+
+----
+
+# Results
+
+## Complexity metrics in a global perspective
+
+Here, visualizations for different complexity metrics based on the UniNum dataset are given. Chinese varieties excluded from the surprisal map due to inflated surprisal values resulting from their ideographic writing system. 
+
+```{r, echo=F, fig.show="hold", out.width="50%"}
+#UniNum, MDL
+#UniNum, n-gram surprisal (Chinese varieties excluded due to inflated surprisal values resulting from ideographic writing system)
+### UniNum, average LDL production error rate
+### UniNum, average LDL comprehension accuracy rate
+
+uninum.MDL.map
+
+uninum.surprisal.map
+
+uninum.PER.map
+
+uninum.accuracy.map
+```
+
+Below, first principal component resulting from PCA performed on these variables is displayed on a map:
+
+```{r,warning=F,message=F,echo=F}
+uninum.PC1.map
+```
+
+PC1 explains `r round(summary(uninum.merged.PCA)$importance['Proportion of Variance','PC1'],3)` of the variance in the data, and shows a strong correlation with MDL. 
+
+```{r,warning=F,message=F,echo=F}
+uninum.PCA.correlations
+```
+
+Predicted complexity values for South Asia vs. rest of world:
+
+```{r,warning=F,message=F,echo=F}
+model.PC1.uninum.predictions
+```
+
+## Complexity metrics within South Asia
+
+Here, visualizations for different complexity metrics based on the augmented SAND dataset are given. 
+
+```{r, echo=F, fig.show="hold", out.width="50%"}
+#UniNum, MDL
+#UniNum, n-gram surprisal (Chinese varieties excluded due to inflated surprisal values resulting from ideographic writing system)
+### UniNum, average LDL production error rate
+### UniNum, average LDL comprehension accuracy rate
+
+S.Asia.MDL.map
+
+S.Asia.surprisal.map
+
+S.Asia.PER.map
+
+S.Asia.accuracy.map
+```
+
+Below, the first principal component resulting from PCA performed on these variables is displayed on a map:
+
+```{r,warning=F,message=F,echo=F}
+S.Asia.PC1.map
+```
+
+PC1 explains `r round(summary(sand.merged.PCA)$importance['Proportion of Variance','PC1'],3)` of the variance in the data, and shows a strong correlation with MDL. 
+
+```{r,warning=F,message=F,echo=F}
+sand.PCA.correlations
+```
+
+Below, the first principal component is shown for all Indo-Aryan languages, with language labels:
+
+```{r,warning=F,message=F,echo=F}
+#IA.PC1.map.labeled
+
+ggplot() + 
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color = "black", fill = NA, size = 0.1
+  ) + 
+  geom_point(data = sand.merged[sand.merged$Family=='Indo-Aryan',],
+             aes(x = Longitude, y = Latitude, shape = Family, fill = PC1),
+             alpha = .5
+  ) + 
+  geom_label_repel(
+    data = sand.merged[sand.merged$Family=='Indo-Aryan',],
+    aes(x = Longitude, y = Latitude, label = Name, fill = PC1), size=2, max.overlaps = 1e10
+  ) + 
+  xlim(50,100) + ylim(0,50) + scale_fill_viridis()
+
+```
+
+Predicted complexity values for Indo-Aryan vs. non-Indo-Aryan:
+
+```{r,warning=F,message=F,echo=F}
+model.PC1.sand.predictions
+```
+
+Here, we list complexity values for individual Indo-Aryan languages, ordered according to PC1:
+
+```{r,warning=F,message=F,echo=F}
+sand.merged.IA <- sand.merged[sand.merged$Family=='Indo-Aryan',]
+
+knitr::kable(sand.merged.IA[order(sand.merged.IA$PC1),c('Name','PC1','MDL','surprisal','PER','accuracy')],row.names = FALSE)
+```
+
+### Relationship between complexity and other predictors
+
+Relationships between complexity, elevation, and vigesimality are visualized below:
+
+```{r,warning=F,message=F,echo=F}
+IA.PC1.map
+
+elevation.plot
+
+vigesimal.plot
+```
+
+Predicted vigesimality values from a fitted model (`gam(PC1 ~ vigesimal + s(elevation), data=merged[merged$Family=='Indo-Aryan',])`):
+
+```{r,warning=F,message=F,echo=F}
+pred.vigesimal
+```
+
+Predicted slope of smooth function representing effect of elevation on PC1 from same model:
+
+```{r}
+slope.elevation
+```
+
+---
+
+## Complexity metrics within languages
+
+### UniNum, linear discriminative learning (production accuracy) by cardinality
+
+(selected languages)
+
+```{r,warning=F,message=F,echo=F}
+production.cardinality.plot
+```
+
+GAM smooths
+
+```{r,warning=F,message=F,echo=F}
+plot.production
+```
+
+Marginal slopes
+
+```{r,warning=F,message=F,echo=F}
+slopes.production
+```
+
+Marginal effects of group
+
+```{r,warning=F,message=F,echo=F}
+intercepts.production
+```
+
+### UniNum, linear discriminative comprehension accuracy by cardinality
+
+(selected languages)
+
+```{r,warning=F,message=F,echo=F}
+comprehension.cardinality.plot
+```
+
+GAM smooths
+
+```{r,warning=F,message=F,echo=F}
+plot.comprehension
+```
+
+Marginal slopes
+
+```{r,warning=F,message=F,echo=F}
+slopes.comprehension
+```
+
+Marginal effects of group
+
+```{r,warning=F,message=F,echo=F}
+intercepts.comprehension
+```
+
+### UniNum, surprisal by cardinality
+
+(selected languages)
+
+```{r,warning=F,message=F,echo=F}
+surprisal.cardinality.plot
+```
+
+GAM smooths
+
+```{r,warning=F,message=F,echo=F}
+plot.surprisal
+```
+
+Marginal slopes
+
+```{r,warning=F,message=F,echo=F}
+slopes.surprisal
+```
+
+Marginal effects of group
+
+```{r,warning=F,message=F,echo=F}
+intercepts.surprisal
+```
+
+-----
+
+## Sensitivity analysis on smoothing constant values
+
+Correlations between surprisal values computed from the UniNum dataset under different smoothing constants are shown below:
+
+```{r,warning=F,message=F,echo=F}
+alpha.sensitivity.uninum
+```
+
+Correlations between surprisal values computed from the SAND dataset under different smoothing constants are shown below:
+
+```{r,warning=F,message=F,echo=F}
+alpha.sensitivity.sand
+```
+
+-----
+
+# References
+
