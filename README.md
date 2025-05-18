@@ -1,6 +1,8 @@
 # IA-numeral-complexity
 Code for paper "Complexity counts"
 
+Notebook can be viewed here: https://chundrac.github.io/IA-numeral-complexity/
+
 To run all scripts and compile notebook, run the following:
 
 ```
